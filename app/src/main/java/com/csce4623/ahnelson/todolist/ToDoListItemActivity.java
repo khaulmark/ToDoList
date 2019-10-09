@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Adapter;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -26,8 +27,9 @@ import java.util.List;
 
 public class ToDoListItemActivity extends AppCompatActivity implements View.OnClickListener{
 
-    TextView TextView;
-    EditText EditText;
+    EditText EditTextContent;
+    EditText EditTextTitle;
+    //CheckBox CompletedCheckBox;
     private String id = "";
 
     @Override
@@ -41,7 +43,8 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
         String[] projection = {
                 ToDoProvider.TODO_TABLE_COL_ID,
                 ToDoProvider.TODO_TABLE_COL_TITLE,
-                ToDoProvider.TODO_TABLE_COL_CONTENT};
+                ToDoProvider.TODO_TABLE_COL_CONTENT,
+                ToDoProvider.TODO_TABLE_COL_COMPLETED};
 
         Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,"_ID=" + id,null,null);
 
@@ -53,18 +56,34 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
         myCursor.moveToFirst();
         String content = myCursor.getString(contentIndex);
 
-        TextView = (TextView) findViewById(R.id.tvNoteTitle);
-        TextView.setText(title);
+        /*int completedIndex = myCursor.getColumnIndex("COMPLETED");
+        myCursor.moveToFirst();
+        String completed = myCursor.getString(completedIndex);
 
-        EditText = (EditText) findViewById(R.id.etNoteContent);
-        EditText.setInputType(InputType.TYPE_CLASS_TEXT);
+        CompletedCheckBox = (CheckBox) findViewById(R.id.completedBox);
+        if (completed == "false") {
+            CompletedCheckBox.setChecked(false);
+        }
+        else {
+            CompletedCheckBox.setChecked(true);
+        }*/
+
+        EditTextTitle = (EditText) findViewById(R.id.tvNoteTitle);
+        EditTextTitle.setInputType(InputType.TYPE_CLASS_TEXT);
+        EditTextTitle.setText(title);
+
+        EditTextContent = (EditText) findViewById(R.id.etNoteContent);
+        EditTextContent.setInputType(InputType.TYPE_CLASS_TEXT);
         //Load description from content provider
-        EditText.setText(content);
+        EditTextContent.setText(content);
+
+
     }
 
     //Set the OnClick Listener for buttons
     void initializeComponents(){
         findViewById(R.id.btnSave).setOnClickListener(this);
+        findViewById(R.id.btnDelete).setOnClickListener(this);
     }
 
     @Override
@@ -75,11 +94,47 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
 
             case R.id.btnSave:
                 ContentValues myCV = new ContentValues();
-                myCV.put(ToDoProvider.TODO_TABLE_COL_CONTENT, EditText.getText().toString());
+                myCV.put(ToDoProvider.TODO_TABLE_COL_CONTENT, EditTextContent.getText().toString());
+                myCV.put(ToDoProvider.TODO_TABLE_COL_TITLE, EditTextTitle.getText().toString());
                 getContentResolver().update(ToDoProvider.CONTENT_URI, myCV, "_ID=" + id, null);
 
-                Intent intent = new Intent(ToDoListItemActivity.this, HomeActivity.class);
-                startActivity(intent);
+                Intent intentSave = new Intent(ToDoListItemActivity.this, HomeActivity.class);
+                startActivity(intentSave);
+                break;
+
+            case R.id.btnDelete:
+                deleteNote();
+                Intent intentDelete = new Intent(ToDoListItemActivity.this, HomeActivity.class);
+                startActivity(intentDelete);
+                break;
+        }
+    }
+
+    //Delete the newest note placed into the database
+    void deleteNote(){
+        //Create the projection for the query
+        String[] projection = {
+                ToDoProvider.TODO_TABLE_COL_ID,
+                ToDoProvider.TODO_TABLE_COL_TITLE,
+                ToDoProvider.TODO_TABLE_COL_CONTENT};
+
+        //Perform the query, with ID Descending
+        Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,"_ID=" + id,null,null);
+        if(myCursor != null & myCursor.getCount() > 0) {
+            //Move the cursor to the beginning
+            //myCursor.moveToFirst();
+            //Get the ID (int) of the newest note (column 0)
+           // int newestId = myCursor.getInt(0);
+            //Delete the note
+            int didWork = getContentResolver().delete(Uri.parse(ToDoProvider.CONTENT_URI + "/" + id), null, null);
+            //If deleted, didWork returns the number of rows deleted (should be 1)
+            if (didWork == 1) {
+                //If it didWork, then create a Toast Message saying that the note was deleted
+                //Toast.makeText(getApplicationContext(), "Deleted Note " + newestId, Toast.LENGTH_LONG).show();
+            }
+        } else{
+            //Toast.makeText(getApplicationContext(), "No Note to delete!", Toast.LENGTH_LONG).show();
+
         }
     }
 }

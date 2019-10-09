@@ -31,7 +31,7 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
     MyAdapter adapter;
 
     public static final String EXTRA_MESSAGE_ID = "com.csce4623.ahnelson.todolist.ID";
-    public static final String EXTRA_MESSAGE_TITLE = "com.csce4623.ahnelson.todlist.TITLE";
+    //public static final String EXTRA_MESSAGE_TITLE = "com.csce4623.ahnelson.todlist.TITLE";
     private String userText;
 
     @Override
@@ -46,11 +46,12 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
         String[] projection = {
                 ToDoProvider.TODO_TABLE_COL_ID,
                 ToDoProvider.TODO_TABLE_COL_TITLE,
-                ToDoProvider.TODO_TABLE_COL_CONTENT};
+                ToDoProvider.TODO_TABLE_COL_CONTENT,
+                ToDoProvider.TODO_TABLE_COL_COMPLETED};
 
         Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,null,null,null);
 
-        if (myCursor.getCount() != 0) {
+        if (myCursor != null && myCursor.getCount() > 0) {
             int titleIndex = myCursor.getColumnIndex("TITLE");
             for (myCursor.moveToFirst(); !myCursor.isAfterLast(); myCursor.moveToNext()) {
                 recyclerViewList.add(myCursor.getString(titleIndex));
@@ -79,7 +80,6 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
     //Set the OnClick Listener for buttons
     void initializeComponents(){
         findViewById(R.id.btnNewNote).setOnClickListener(this);
-        findViewById(R.id.btnDeleteNote).setOnClickListener(this);
     }
 
     @Override
@@ -100,7 +100,6 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
                         userText = input.getText().toString();
                         recyclerViewList.add(userText);
                         recyclerViewIDList.add(createNewNote(userText));
-                        createNewNote(userText);
                     }
                 });
 
@@ -114,21 +113,6 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
                 builder.show();
 
                 break;
-            //If delete note, call deleteNewestNote()
-            case R.id.btnDeleteNote:
-                if (recyclerViewList.isEmpty()) {
-                    break;
-                }
-
-                else {
-                    deleteNewestNote();
-                    int position = recyclerViewList.size() - 1;
-                    recyclerViewList.remove(position);
-                    recyclerViewIDList.remove(position);
-                    recyclerView.getAdapter().notifyItemChanged(position);
-                    break;
-                }
-            //This shouldn't happen
             default:
                 break;
         }
@@ -141,45 +125,17 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
         //Put key_value pairs based on the column names, and the values
         myCV.put(ToDoProvider.TODO_TABLE_COL_TITLE, title);
         myCV.put(ToDoProvider.TODO_TABLE_COL_CONTENT,"Insert content here.");
+        myCV.put(ToDoProvider.TODO_TABLE_COL_COMPLETED, "false");
         //Perform the insert function using the ContentProvider
         String listItemID = getContentResolver().insert(ToDoProvider.CONTENT_URI,myCV).getLastPathSegment();
         //Set the projection for the columns to be returned
-        String[] projection = {
+        /*String[] projection = {
                 ToDoProvider.TODO_TABLE_COL_ID,
                 ToDoProvider.TODO_TABLE_COL_TITLE,
-                ToDoProvider.TODO_TABLE_COL_CONTENT};
+                ToDoProvider.TODO_TABLE_COL_CONTENT,
+                ToDoProvider.TODO_TABLE_COL_COMPLETED};
         //Perform a query to get all rows in the DB
-        Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,null,null,null);
-        //Create a toast message which states the number of rows currently in the database
-        //Toast.makeText(getApplicationContext(),Integer.toString(myCursor.getCount()),Toast.LENGTH_SHORT).show();
+        Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,null,null,null);*/
         return listItemID;
-    }
-
-    //Delete the newest note placed into the database
-    void deleteNewestNote(){
-        //Create the projection for the query
-        String[] projection = {
-                ToDoProvider.TODO_TABLE_COL_ID,
-                ToDoProvider.TODO_TABLE_COL_TITLE,
-                ToDoProvider.TODO_TABLE_COL_CONTENT};
-
-        //Perform the query, with ID Descending
-        Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,null,null,"_ID DESC");
-        if(myCursor != null & myCursor.getCount() > 0) {
-            //Move the cursor to the beginning
-            myCursor.moveToFirst();
-            //Get the ID (int) of the newest note (column 0)
-            int newestId = myCursor.getInt(0);
-            //Delete the note
-            int didWork = getContentResolver().delete(Uri.parse(ToDoProvider.CONTENT_URI + "/" + newestId), null, null);
-            //If deleted, didWork returns the number of rows deleted (should be 1)
-            if (didWork == 1) {
-                //If it didWork, then create a Toast Message saying that the note was deleted
-                //Toast.makeText(getApplicationContext(), "Deleted Note " + newestId, Toast.LENGTH_LONG).show();
-            }
-        } else{
-            //Toast.makeText(getApplicationContext(), "No Note to delete!", Toast.LENGTH_LONG).show();
-
-        }
     }
 }
