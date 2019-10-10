@@ -11,6 +11,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 public class ToDoProvider extends ContentProvider {
     //LOGTAG set to Class Name
@@ -29,8 +30,7 @@ public class ToDoProvider extends ContentProvider {
     public static final String TODO_TABLE_COL_ID = "_ID";
     public static final String TODO_TABLE_COL_TITLE = "TITLE";
     public static final String TODO_TABLE_COL_CONTENT = "CONTENT";
-    public static final String TODO_TABLE_COL_COMPLETED = "false";
-    //public static final boolean TODO_TABLE_COL_COMPLETED = false;
+    public static final String TODO_TABLE_COL_TASKDONE = "TASKDONE";
     //Table create string based on column names
     private static final String SQL_CREATE_MAIN = "CREATE TABLE " +
             TABLE_NAME+ " " +                       // Table's name
@@ -38,11 +38,13 @@ public class ToDoProvider extends ContentProvider {
             TODO_TABLE_COL_ID + " INTEGER PRIMARY KEY, " +
             TODO_TABLE_COL_TITLE + " TEXT," +
             TODO_TABLE_COL_CONTENT + " TEXT," +
-            TODO_TABLE_COL_COMPLETED + "Text)";
+            TODO_TABLE_COL_TASKDONE+ "TEXT)";
 
     //URI Matcher object to facilitate switch cases between URIs
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     private MainDatabaseHelper mOpenHelper;
+    private int CURRENT_VER = 4;
+    private int OLD_VER = 1;
 
     //Constructor adds two URIs, use for case statements
     public ToDoProvider() {
@@ -187,8 +189,14 @@ public class ToDoProvider extends ContentProvider {
          * Instantiates an open helper for the provider's SQLite data repository
          * Do not do database creation and upgrade here.
          */
+        private int CURRENT_VER = 7;
+
         MainDatabaseHelper(Context context) {
-            super(context, DBNAME, null, 1);
+            super(context, DBNAME, null, 8);
+
+            //if (CURRENT_VER > OLD_VER) {
+            //onUpgrade(getReadableDatabase(), CURRENT_VER, 0);
+            //}
         }
 
         /*
@@ -196,15 +204,12 @@ public class ToDoProvider extends ContentProvider {
          * repository and SQLite reports that it doesn't exist.
          */
         public void onCreate(SQLiteDatabase db) {
-
             // Creates the main table
             db.execSQL(SQL_CREATE_MAIN);
         }
 
         public void onUpgrade(SQLiteDatabase db, int int1, int int2){
-            db.execSQL("DROP TABLE IF EXISTS ToDoList");
-            onCreate(db);
-
+            //db.execSQL("ALTER TABLE ToDoList ADD COLUMN TASKDONE DEFAULT 'FALSE'");
         }
     }
 

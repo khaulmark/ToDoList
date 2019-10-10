@@ -13,6 +13,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.InputType;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Adapter;
 import android.widget.AdapterView;
@@ -24,12 +25,13 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.List;
+import 	android.view.inputmethod.EditorInfo;
 
 public class ToDoListItemActivity extends AppCompatActivity implements View.OnClickListener{
 
     EditText EditTextContent;
     EditText EditTextTitle;
-    //CheckBox CompletedCheckBox;
+    CheckBox CompletedCheckBox;
     private String id = "";
 
     @Override
@@ -44,7 +46,7 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
                 ToDoProvider.TODO_TABLE_COL_ID,
                 ToDoProvider.TODO_TABLE_COL_TITLE,
                 ToDoProvider.TODO_TABLE_COL_CONTENT,
-                ToDoProvider.TODO_TABLE_COL_COMPLETED};
+                ToDoProvider.TODO_TABLE_COL_TASKDONE};
 
         Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,"_ID=" + id,null,null);
 
@@ -56,17 +58,17 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
         myCursor.moveToFirst();
         String content = myCursor.getString(contentIndex);
 
-        /*int completedIndex = myCursor.getColumnIndex("COMPLETED");
+        int taskdoneIndex = myCursor.getColumnIndex("TASKDONE");
         myCursor.moveToFirst();
-        String completed = myCursor.getString(completedIndex);
+        String taskDone = myCursor.getString(taskdoneIndex);
 
         CompletedCheckBox = (CheckBox) findViewById(R.id.completedBox);
-        if (completed == "false") {
+        if (taskDone.equals("false")) {
             CompletedCheckBox.setChecked(false);
         }
         else {
             CompletedCheckBox.setChecked(true);
-        }*/
+        }
 
         EditTextTitle = (EditText) findViewById(R.id.tvNoteTitle);
         EditTextTitle.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -96,6 +98,14 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
                 ContentValues myCV = new ContentValues();
                 myCV.put(ToDoProvider.TODO_TABLE_COL_CONTENT, EditTextContent.getText().toString());
                 myCV.put(ToDoProvider.TODO_TABLE_COL_TITLE, EditTextTitle.getText().toString());
+                String tempChecked;
+                if (CompletedCheckBox.isChecked()) {
+                    tempChecked = "true";
+                }
+                else {
+                    tempChecked = "false";
+                }
+                myCV.put(ToDoProvider.TODO_TABLE_COL_TASKDONE, tempChecked);
                 getContentResolver().update(ToDoProvider.CONTENT_URI, myCV, "_ID=" + id, null);
 
                 Intent intentSave = new Intent(ToDoListItemActivity.this, HomeActivity.class);
@@ -116,7 +126,8 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
         String[] projection = {
                 ToDoProvider.TODO_TABLE_COL_ID,
                 ToDoProvider.TODO_TABLE_COL_TITLE,
-                ToDoProvider.TODO_TABLE_COL_CONTENT};
+                ToDoProvider.TODO_TABLE_COL_CONTENT,
+                ToDoProvider.TODO_TABLE_COL_TASKDONE };
 
         //Perform the query, with ID Descending
         Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,"_ID=" + id,null,null);
