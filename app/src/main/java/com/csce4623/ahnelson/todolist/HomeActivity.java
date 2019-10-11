@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.List;
 
-//GIT COMMIT 10:49 10/9
+//GIT COMMIT 2:30 AM - FROM HOME
 
 //Create HomeActivity and implement the OnClick listener
 public class HomeActivity extends AppCompatActivity implements View.OnClickListener{
@@ -50,7 +50,9 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
                 ToDoProvider.TODO_TABLE_COL_ID,
                 ToDoProvider.TODO_TABLE_COL_TITLE,
                 ToDoProvider.TODO_TABLE_COL_CONTENT,
-                ToDoProvider.TODO_TABLE_COL_TASKDONE };
+                ToDoProvider.TODO_TABLE_COL_TASKDONE,
+                ToDoProvider.TODO_TABLE_COL_ALARMDATE,
+                ToDoProvider.TODO_TABLE_COL_ALARMTIME };
 
         Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,null,null,null);
 
@@ -128,6 +130,8 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
         myCV.put(ToDoProvider.TODO_TABLE_COL_TITLE, title);
         myCV.put(ToDoProvider.TODO_TABLE_COL_CONTENT,"Insert content here.");
         myCV.put(ToDoProvider.TODO_TABLE_COL_TASKDONE, "false");
+        myCV.put(ToDoProvider.TODO_TABLE_COL_ALARMDATE, "DATE");
+        myCV.put(ToDoProvider.TODO_TABLE_COL_ALARMTIME, "TIME");
         //Perform the insert function using the ContentProvider
         String listItemID = getContentResolver().insert(ToDoProvider.CONTENT_URI,myCV).getLastPathSegment();
         //Set the projection for the columns to be returned

@@ -31,6 +31,8 @@ public class ToDoProvider extends ContentProvider {
     public static final String TODO_TABLE_COL_TITLE = "TITLE";
     public static final String TODO_TABLE_COL_CONTENT = "CONTENT";
     public static final String TODO_TABLE_COL_TASKDONE = "TASKDONE";
+    public static final String TODO_TABLE_COL_ALARMDATE = "ALARMDATE";
+    public static final String TODO_TABLE_COL_ALARMTIME = "ALARMTIME";
     //Table create string based on column names
     private static final String SQL_CREATE_MAIN = "CREATE TABLE " +
             TABLE_NAME+ " " +                       // Table's name
@@ -38,7 +40,9 @@ public class ToDoProvider extends ContentProvider {
             TODO_TABLE_COL_ID + " INTEGER PRIMARY KEY, " +
             TODO_TABLE_COL_TITLE + " TEXT," +
             TODO_TABLE_COL_CONTENT + " TEXT," +
-            TODO_TABLE_COL_TASKDONE+ "TEXT)";
+            TODO_TABLE_COL_TASKDONE + "TEXT," +
+            TODO_TABLE_COL_ALARMDATE + "ALARMDATE," +
+            TODO_TABLE_COL_ALARMTIME + "ALARMTIME)";
 
     //URI Matcher object to facilitate switch cases between URIs
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -189,14 +193,11 @@ public class ToDoProvider extends ContentProvider {
          * Instantiates an open helper for the provider's SQLite data repository
          * Do not do database creation and upgrade here.
          */
-        private int CURRENT_VER = 7;
+        private int CURRENT_VER = 9;
 
         MainDatabaseHelper(Context context) {
-            super(context, DBNAME, null, 8);
-
-            //if (CURRENT_VER > OLD_VER) {
+            super(context, DBNAME, null, 9);
             //onUpgrade(getReadableDatabase(), CURRENT_VER, 0);
-            //}
         }
 
         /*
@@ -209,7 +210,8 @@ public class ToDoProvider extends ContentProvider {
         }
 
         public void onUpgrade(SQLiteDatabase db, int int1, int int2){
-            //db.execSQL("ALTER TABLE ToDoList ADD COLUMN TASKDONE DEFAULT 'FALSE'");
+            //db.execSQL("ALTER TABLE ToDoList ADD COLUMN ALARMDATE DEFAULT 'NONE'");
+            //db.execSQL("ALTER TABLE ToDoList ADD COLUMN ALARMTIME DEFAULT 'NONE'");
         }
     }
 
