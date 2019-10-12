@@ -1,9 +1,13 @@
 package com.csce4623.ahnelson.todolist;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -22,7 +26,7 @@ import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.List;
 
-//GIT COMMIT 2:30 AM - FROM HOME
+
 
 //Create HomeActivity and implement the OnClick listener
 public class HomeActivity extends AppCompatActivity implements View.OnClickListener{
@@ -33,7 +37,6 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
     MyAdapter adapter;
 
     public static final String EXTRA_MESSAGE_ID = "com.csce4623.ahnelson.todolist.ID";
-    //public static final String EXTRA_MESSAGE_TITLE = "com.csce4623.ahnelson.todlist.TITLE";
     private String userText;
 
     @Override
@@ -42,9 +45,9 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_home);
         initializeComponents();
 
+        //Recycler view holds the visible list of titles for the home activity
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
 
         String[] projection = {
                 ToDoProvider.TODO_TABLE_COL_ID,
@@ -52,11 +55,14 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
                 ToDoProvider.TODO_TABLE_COL_CONTENT,
                 ToDoProvider.TODO_TABLE_COL_TASKDONE,
                 ToDoProvider.TODO_TABLE_COL_ALARMDATE,
-                ToDoProvider.TODO_TABLE_COL_ALARMTIME };
+                ToDoProvider.TODO_TABLE_COL_ALARMTIME,
+                ToDoProvider.TODO_TABLE_COL_ISALARMSET};
 
+        //Queries the entire DB
         Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,null,null,null);
 
         if (myCursor != null && myCursor.getCount() > 0) {
+            //Iterates through the DB to get titles and IDs
             int titleIndex = myCursor.getColumnIndex("TITLE");
             for (myCursor.moveToFirst(); !myCursor.isAfterLast(); myCursor.moveToNext()) {
                 recyclerViewList.add(myCursor.getString(titleIndex));
@@ -66,14 +72,17 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
                 recyclerViewIDList.add(myCursor.getString(idIndex));
             }
         }
+        myCursor.close();
 
+        //MyAdapter provides interface to override the click listener for recycler view
+        //Also inflates the recycler view with additional rows
         adapter = new MyAdapter(this, recyclerViewList,
                 new OnMyAdapterItemClickListener() {
                     @Override
                     public void onItemClicked(int position) {
+                        //Intent starts the Item activity and passes it the ID of the row
                         Intent intent = new Intent(HomeActivity.this, ToDoListItemActivity.class);
                         intent.putExtra(EXTRA_MESSAGE_ID, recyclerViewIDList.get(position));
-                        //intent.putExtra(EXTRA_MESSAGE_TITLE, recyclerViewList.get(position));
                         startActivity(intent);
                     }
                 }
@@ -91,6 +100,7 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()){
             //If new Note, call createNewNote()
             case R.id.btnNewNote:
+                //Create a pop-up dialog that the user can specify the title of the item
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Enter the name of the ToDoList Item:");
 
@@ -132,16 +142,10 @@ public class HomeActivity extends AppCompatActivity implements View.OnClickListe
         myCV.put(ToDoProvider.TODO_TABLE_COL_TASKDONE, "false");
         myCV.put(ToDoProvider.TODO_TABLE_COL_ALARMDATE, "DATE");
         myCV.put(ToDoProvider.TODO_TABLE_COL_ALARMTIME, "TIME");
+        myCV.put(ToDoProvider.TODO_TABLE_COL_ISALARMSET, "false");
         //Perform the insert function using the ContentProvider
         String listItemID = getContentResolver().insert(ToDoProvider.CONTENT_URI,myCV).getLastPathSegment();
-        //Set the projection for the columns to be returned
-        /*String[] projection = {
-                ToDoProvider.TODO_TABLE_COL_ID,
-                ToDoProvider.TODO_TABLE_COL_TITLE,
-                ToDoProvider.TODO_TABLE_COL_CONTENT,
-                ToDoProvider.TODO_TABLE_COL_COMPLETED};
-        //Perform a query to get all rows in the DB
-        Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,null,null,null);*/
+
         return listItemID;
     }
 }

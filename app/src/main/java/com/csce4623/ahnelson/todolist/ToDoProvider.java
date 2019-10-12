@@ -11,7 +11,6 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 public class ToDoProvider extends ContentProvider {
     //LOGTAG set to Class Name
@@ -33,6 +32,7 @@ public class ToDoProvider extends ContentProvider {
     public static final String TODO_TABLE_COL_TASKDONE = "TASKDONE";
     public static final String TODO_TABLE_COL_ALARMDATE = "ALARMDATE";
     public static final String TODO_TABLE_COL_ALARMTIME = "ALARMTIME";
+    public static final String TODO_TABLE_COL_ISALARMSET = "ISALARMSET";
     //Table create string based on column names
     private static final String SQL_CREATE_MAIN = "CREATE TABLE " +
             TABLE_NAME+ " " +                       // Table's name
@@ -42,7 +42,8 @@ public class ToDoProvider extends ContentProvider {
             TODO_TABLE_COL_CONTENT + " TEXT," +
             TODO_TABLE_COL_TASKDONE + "TEXT," +
             TODO_TABLE_COL_ALARMDATE + "ALARMDATE," +
-            TODO_TABLE_COL_ALARMTIME + "ALARMTIME)";
+            TODO_TABLE_COL_ALARMTIME + "ALARMTIME," +
+            TODO_TABLE_COL_ISALARMSET + "ISALARMSET)";
 
     //URI Matcher object to facilitate switch cases between URIs
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -196,7 +197,7 @@ public class ToDoProvider extends ContentProvider {
         private int CURRENT_VER = 9;
 
         MainDatabaseHelper(Context context) {
-            super(context, DBNAME, null, 9);
+            super(context, DBNAME, null, 10);
             //onUpgrade(getReadableDatabase(), CURRENT_VER, 0);
         }
 
@@ -211,7 +212,7 @@ public class ToDoProvider extends ContentProvider {
 
         public void onUpgrade(SQLiteDatabase db, int int1, int int2){
             //db.execSQL("ALTER TABLE ToDoList ADD COLUMN ALARMDATE DEFAULT 'NONE'");
-            //db.execSQL("ALTER TABLE ToDoList ADD COLUMN ALARMTIME DEFAULT 'NONE'");
+            //db.execSQL("ALTER TABLE ToDoList ADD COLUMN ISALARMSET DEFAULT 'FALSE'");
         }
     }
 

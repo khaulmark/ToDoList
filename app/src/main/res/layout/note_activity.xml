@@ -30,37 +30,20 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/setAlarmButton"
-        style="@style/Widget.AppCompat.CompoundButton.CheckBox"
-        android:layout_width="50dp"
-        android:layout_height="40dp"
+        android:id="@+id/btnAlarm"
+        android:layout_width="70dp"
+        android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         android:background="@android:color/holo_blue_dark"
         android:fontFamily="@font/bungee"
-        android:text="Set Alarm"
+        android:text="Alarm"
         android:textColor="@android:color/background_light"
-        android:textSize="11sp"
+        android:textSize="14sp"
         android:textStyle="italic"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent" />
 
-    <Button
-        android:id="@+id/cancelAlarmButton"
-        style="@style/Widget.AppCompat.CompoundButton.CheckBox"
-        android:layout_width="50dp"
-        android:layout_height="40dp"
-        android:layout_marginLeft="20dp"
-        android:layout_marginBottom="16dp"
-        android:background="@android:color/holo_blue_dark"
-        android:fontFamily="@font/bungee"
-        android:text="Cancel Alarm"
-        android:textColor="@android:color/background_light"
-        android:textSize="11sp"
-        android:textStyle="italic"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/setAlarmButton" />
 
     <EditText
         android:id="@+id/etNoteContent"
@@ -88,7 +71,7 @@
         android:layout_marginStart="10dp"
         android:layout_marginBottom="24dp"
         android:textAppearance="@style/TextAppearance.AppCompat.Body2"
-        android:textSize="11sp"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/etDatePicker"
         tools:text="TIME" />
@@ -101,16 +84,15 @@
         android:layout_marginBottom="24dp"
         android:text="DATE"
         android:textAppearance="@style/TextAppearance.AppCompat.Body2"
-        android:textSize="11sp"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/cancelAlarmButton" />
+        app:layout_constraintStart_toEndOf="@+id/btnAlarm" />
 
     <Button
         android:id="@+id/btnSave"
         android:layout_width="70dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
         android:layout_marginRight="11dp"
         android:layout_marginBottom="8dp"
         android:fontFamily="@font/bungee"

@@ -2,46 +2,30 @@ package com.csce4623.ahnelson.todolist;
 
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.InputType;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
-import android.widget.Adapter;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.InputMismatchException;
-import java.util.List;
-import 	android.view.inputmethod.EditorInfo;
 
-import static com.csce4623.ahnelson.todolist.App.CHANNEL_1_ID;
+import static com.csce4623.ahnelson.todolist.HomeActivity.EXTRA_MESSAGE_ID;
 
 public class ToDoListItemActivity extends AppCompatActivity implements View.OnClickListener, TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener {
 
@@ -50,14 +34,18 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
     CheckBox CompletedCheckBox;
     TextView timeText;
     TextView dateText;
+    Button AlarmButton;
 
     private String id = "";
+    private int idInt;
     private int hourOfDayAlarm;
     private int minuteAlarm;
     private int yearAlarm;
     private int monthAlarm;
     private int dayAlarm;
-    //private NotificationManagerCompat notificationManager;
+    private boolean isAlarmSet;
+
+    public static final String EXTRA_MESSAGE_TITLE = "com.csce4623.ahnelson.todolist.TITLE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +53,10 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
         setContentView(R.layout.note_activity);
         initializeComponents();
         Intent intent = getIntent();
-        id = intent.getStringExtra(HomeActivity.EXTRA_MESSAGE_ID);
+
+        //Get the ID from Home activity
+        id = intent.getStringExtra(EXTRA_MESSAGE_ID);
+        idInt = Integer.parseInt(id);
 
         String[] projection = {
                 ToDoProvider.TODO_TABLE_COL_ID,
@@ -73,11 +64,15 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
                 ToDoProvider.TODO_TABLE_COL_CONTENT,
                 ToDoProvider.TODO_TABLE_COL_TASKDONE,
                 ToDoProvider.TODO_TABLE_COL_ALARMDATE,
-                ToDoProvider.TODO_TABLE_COL_ALARMTIME};
+                ToDoProvider.TODO_TABLE_COL_ALARMTIME,
+                ToDoProvider.TODO_TABLE_COL_ISALARMSET };
 
+        //Point the cursor to the row where _ID = id
         Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,"_ID=" + id,null,null);
 
+        //Move the cursor to each column and save the value to a local variable
         int titleIndex = myCursor.getColumnIndex("TITLE");
+        Log.d("booty", String.valueOf(titleIndex));
         myCursor.moveToFirst();
         String title = myCursor.getString(titleIndex);
 
@@ -97,6 +92,20 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
         myCursor.moveToFirst();
         String alarmTime = myCursor.getString(alarmTimeIndex);
 
+        int isAlarmSetIndex = myCursor.getColumnIndex("ISALARMSET");
+        myCursor.moveToFirst();
+        String isAlarmSetString = myCursor.getString(isAlarmSetIndex);
+
+        if (isAlarmSetString.equals("false")) {
+            isAlarmSet = false;
+        }
+        else {
+            isAlarmSet = true;
+        }
+
+        myCursor.close();
+
+        //Sets the task completed checkbox in the view
         CompletedCheckBox = (CheckBox) findViewById(R.id.completedBox);
         if (taskDone.equals("false")) {
             CompletedCheckBox.setChecked(false);
@@ -105,22 +114,23 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
             CompletedCheckBox.setChecked(true);
         }
 
+        //Set the title in the view
         EditTextTitle = (EditText) findViewById(R.id.tvNoteTitle);
         EditTextTitle.setInputType(InputType.TYPE_CLASS_TEXT);
         EditTextTitle.setText(title);
 
+        //Set the content in the view
         EditTextContent = (EditText) findViewById(R.id.etNoteContent);
         EditTextContent.setInputType(InputType.TYPE_CLASS_TEXT);
-        //Load description from content provider
         EditTextContent.setText(content);
 
+        //Set the time in the view
         timeText = (TextView) findViewById(R.id.etTimePicker);
         timeText.setText(alarmTime);
 
+        //Set the date in the view
         dateText = (TextView) findViewById(R.id.etDatePicker);
         dateText.setText(alarmDate);
-
-        //notificationManager = NotificationManagerCompat.from(this);
     }
 
     //Set the OnClick Listener for buttons
@@ -129,17 +139,20 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
         findViewById(R.id.btnDelete).setOnClickListener(this);
         findViewById(R.id.etTimePicker).setOnClickListener(this);
         findViewById(R.id.etDatePicker).setOnClickListener(this);
-        findViewById(R.id.setAlarmButton).setOnClickListener(this);
-        findViewById(R.id.cancelAlarmButton).setOnClickListener(this);
+        findViewById(R.id.btnAlarm).setOnClickListener(this);
+        findViewById(R.id.completedBox).setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v){
         switch(v.getId()) {
             case R.id.btnSave:
+                //Save button writes all the local variables to the content provider
                 ContentValues myCV = new ContentValues();
                 myCV.put(ToDoProvider.TODO_TABLE_COL_CONTENT, EditTextContent.getText().toString());
                 myCV.put(ToDoProvider.TODO_TABLE_COL_TITLE, EditTextTitle.getText().toString());
+                myCV.put(ToDoProvider.TODO_TABLE_COL_ALARMDATE, dateText.getText().toString());
+                myCV.put(ToDoProvider.TODO_TABLE_COL_ALARMTIME, timeText.getText().toString());
                 String tempChecked;
                 if (CompletedCheckBox.isChecked()) {
                     tempChecked = "true";
@@ -148,47 +161,82 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
                     tempChecked = "false";
                 }
                 myCV.put(ToDoProvider.TODO_TABLE_COL_TASKDONE, tempChecked);
+                String tempAlarm;
+                if (isAlarmSet) {
+                    tempAlarm = "true";
+                }
+                else {
+                    tempAlarm = "false";
+                }
+                myCV.put(ToDoProvider.TODO_TABLE_COL_ISALARMSET, tempAlarm);
                 getContentResolver().update(ToDoProvider.CONTENT_URI, myCV, "_ID=" + id, null);
 
+                //And goes back to home activity
                 Intent intentSave = new Intent(ToDoListItemActivity.this, HomeActivity.class);
                 startActivity(intentSave);
                 break;
 
             case R.id.btnDelete:
+                //Deletes the item, cancels the alarm, and goes back to home
                 deleteNote();
+                cancelAlarm();
                 Intent intentDelete = new Intent(ToDoListItemActivity.this, HomeActivity.class);
                 startActivity(intentDelete);
                 break;
 
+            case R.id.completedBox:
+                //Checking the task complete box cancels the alarm
+                if (CompletedCheckBox.isChecked()) {
+                    CompletedCheckBox.setChecked(true);
+                    cancelAlarm();
+                    Toast.makeText(this, "Alarm Canceled!", Toast.LENGTH_LONG).show();
+                    isAlarmSet = false;
+                }
+                else {
+                    CompletedCheckBox.setChecked(false);
+                }
+                break;
+
             case R.id.etTimePicker:
+                //Opens the time picker dialog and sets the time for the alarm
                 DialogFragment timePicker = new TimePickerFragment();
                 timePicker.show(getSupportFragmentManager(), "time picker");
                 break;
 
             case R.id.etDatePicker:
+                //Opens the calendar dialog and sets the date for the alarm
                 DialogFragment datePicker = new DatePickerFragment();
                 datePicker.show(getSupportFragmentManager(), "date picker");
                 break;
 
-            //TODO - Make set alarm and cancel alarm one button
-            //TODO - ADD one more column to database that lets me know if the user has an alarm set for this item
-            //TODO - If Alarm is set, send Toast message and set background color to green.. if not set, leave blue
-            //TODO - Make Date/Time look nicer
-            case R.id.setAlarmButton:
-                Calendar cal = Calendar.getInstance();
-                cal.set(Calendar.YEAR, yearAlarm);
-                cal.set(Calendar.MONTH, monthAlarm);
-                cal.set(Calendar.DAY_OF_MONTH, dayAlarm);
-                cal.set(Calendar.HOUR_OF_DAY, hourOfDayAlarm);
-                cal.set(Calendar.MINUTE, minuteAlarm);
-                startAlarm(cal);
-                break;
+            case R.id.btnAlarm:
+                AlarmButton = (Button) findViewById(R.id.btnAlarm);
 
-            //TODO - One more issue... if not calendar value isn't exactly the same, it won't cancel the alarm
-            //TODO - Use boolean alarmSet value from DB to prevent user from altering time/date picker??
-            case R.id.cancelAlarmButton:
-                cancelAlarm();
-                break;
+                //If the alarm is set, the same button cancles
+                //TODO -- make this its own button... would be way less clunky
+                if (isAlarmSet) {
+                    cancelAlarm();
+                    Toast.makeText(this, "Alarm Canceled!", Toast.LENGTH_LONG).show();
+                    isAlarmSet = false;
+                }
+                //If the user hasn't specified a date and time, don't set alarm
+                else if (timeText.toString().equals("TIME") || dateText.toString().equals("DATE")) {
+                    break;
+                }
+                else {
+                    //If no alarm, set the alarm with date and time
+                    Calendar cal = Calendar.getInstance();
+                    cal.set(Calendar.YEAR, yearAlarm);
+                    cal.set(Calendar.MONTH, monthAlarm);
+                    cal.set(Calendar.DAY_OF_MONTH, dayAlarm);
+                    cal.set(Calendar.HOUR_OF_DAY, hourOfDayAlarm);
+                    cal.set(Calendar.MINUTE, minuteAlarm);
+                    startAlarm(cal);
+                    isAlarmSet = true;
+
+                    Toast.makeText(this, "Alarm Set!", Toast.LENGTH_LONG).show();
+                    break;
+                }
 
             default:
                 break;
@@ -196,9 +244,13 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void startAlarm(Calendar c) {
+        //Creates a pending intent that runs the broadcast receiver that sends the alarm notification
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent alarmIntent = new Intent(this, AlertReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, alarmIntent, 0);
+        alarmIntent.putExtra(EXTRA_MESSAGE_TITLE, EditTextTitle.getText().toString());
+        alarmIntent.putExtra(EXTRA_MESSAGE_ID, id);
+        //Pending intent ID is id of row
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, idInt, alarmIntent, 0);
 
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, c.getTimeInMillis(), pendingIntent);
     }
@@ -206,23 +258,13 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
     private void cancelAlarm() {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent alarmIntent = new Intent(this, AlertReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, alarmIntent, 0);
+        //Same id for easy cancellation
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, idInt, alarmIntent, 0);
 
         alarmManager.cancel(pendingIntent);
     }
 
-    /*public void sendOnChannel1(View v) {
-        Notification notification = new NotificationCompat.Builder(this,CHANNEL_1_ID)
-                .setSmallIcon(R.drawable.ic_access_alarms_black_24dp)
-                .setContentTitle("test")
-                .setContentText("test content")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_ALARM)
-                .build();
-
-        notificationManager.notify(1, notification);
-    }*/
-
+    //Time from time picker dialog is returned here
     @Override
     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
         String amOrPm;
@@ -284,6 +326,7 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
         timeText.setText(hourOfDay + ":" + minuteDisplay + " " + amOrPm);
     }
 
+    //Date from calendar dialog is sent here
     @Override
     public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
         yearAlarm = year;
@@ -293,7 +336,7 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
         dateText.setText(month + "/" + dayOfMonth + "/" + year);
     }
 
-    //Delete the newest note placed into the database
+    //Delete the currently viewed item in the ToDOList
     void deleteNote(){
         //Create the projection for the query
         String[] projection = {
@@ -307,20 +350,8 @@ public class ToDoListItemActivity extends AppCompatActivity implements View.OnCl
         //Perform the query, with ID Descending
         Cursor myCursor = getContentResolver().query(ToDoProvider.CONTENT_URI,projection,"_ID=" + id,null,null);
         if(myCursor != null & myCursor.getCount() > 0) {
-            //Move the cursor to the beginning
-            //myCursor.moveToFirst();
-            //Get the ID (int) of the newest note (column 0)
-           // int newestId = myCursor.getInt(0);
             //Delete the note
-            int didWork = getContentResolver().delete(Uri.parse(ToDoProvider.CONTENT_URI + "/" + id), null, null);
-            //If deleted, didWork returns the number of rows deleted (should be 1)
-            if (didWork == 1) {
-                //If it didWork, then create a Toast Message saying that the note was deleted
-                //Toast.makeText(getApplicationContext(), "Deleted Note " + newestId, Toast.LENGTH_LONG).show();
-            }
-        } else{
-            //Toast.makeText(getApplicationContext(), "No Note to delete!", Toast.LENGTH_LONG).show();
-
+            getContentResolver().delete(Uri.parse(ToDoProvider.CONTENT_URI + "/" + id), null, null);
         }
     }
 }
